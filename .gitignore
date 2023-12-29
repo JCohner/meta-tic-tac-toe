@@ -1,4 +1,5 @@
 __pycache__
-
+logs
+*log
 # ignore generated proto and rpc files
 #remote_calls/game_*
