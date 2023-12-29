@@ -1,11 +1,18 @@
 import tkinter as tk
 from collections import namedtuple
+from enum import Enum
+from math import sqrt
 
-# import pprint
-# pp = pprint.PrettyPrinter(indent=4)
+import logging
+from pprint import PrettyPrinter, pformat
+pp = PrettyPrinter(indent=4)
 
 Point = lambda x,y : namedtuple('Point', 'x y')(int(x),int(y))
 Line = lambda p1, p2 : namedtuple('Line', 'p1, p2')(p1, p2)
+Len = lambda L : int(sqrt((L.p1.x - L.p2.x)**2 + (L.p1.y - L.p2.y)**2))
+
+Piece = Enum('Piece', ['X', 'O'])
+# TODO(josh): could use list comprehension to make an enum of all valid squares....
 
 class Board():
   def __init__(self):
@@ -14,12 +21,18 @@ class Board():
     self.CENTER = Point(self.SIZE/2, self.SIZE/2)
 
     self.lines = {}
+    self.centers = {}
 
     self.canvas = tk.Canvas(self.root, width = self.SIZE, height = self.SIZE, bg='white')
     self.generate_board(self.CENTER, 700, "main")
     self.generate_inner_boards(700)
+    logging.debug(pformat(self.lines))
+
+    self.generate_centers()
+    logging.debug(pformat(self.centers))
+
     self.canvas.pack(anchor=tk.CENTER, expand=True)
-    self.root.bind("<Button>", self.click_handler)
+    self.root.bind("<Button-1>", self.click_handler)
     self.root.mainloop()
 
   def generate_inner_boards(self, size):
@@ -94,10 +107,30 @@ class Board():
 
     return column + row
 
+  def generate_centers(self):
+    for key, item in self.lines.items():
+      temp_d = {}
+      offset_to_center = Point(x = 1/6 * Len(self.lines[key]['h1']), 
+                               y = 1/6 * Len(self.lines[key]['v1']))
+      for i, l in zip(['1','2','3'], [1, 3, 5]):
+        for j, k in zip(['a','b','c'], [1, 3, 5]):
+          p = Point(x = self.lines[key]['h1'].p1.x + k * offset_to_center.x, 
+                    y = self.lines[key]['v1'].p1.y + l * offset_to_center.y)
+          temp_d[j+i] = p
+          # if key != "main":
+          #   self.canvas.create_text(*p, text = key+j+i)
+      self.centers[key] = temp_d
+
+  def generate_shape(self, shape, square):
+    p = self.centers[square[:2]][square[2:]]
+
   def click_handler(self, event):
-    mini_board = self.get_board(event, "main")
-    square = self.get_board(event, mini_board)
+    click_point = Point(event.x, event.y)
+    mini_board = self.get_board(click_point, "main")
+    square = self.get_board(click_point, mini_board)
     print(mini_board + square)
 
 if __name__ == "__main__":
+  logging.basicConfig(filename='logs/board.log', encoding='utf-8', level=logging.DEBUG)
+  logging.getLogger().addHandler(logging.StreamHandler())
   b = Board()
