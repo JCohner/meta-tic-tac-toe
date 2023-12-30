@@ -18,8 +18,11 @@ Line = lambda p1, p2 : namedtuple('Line', 'p1, p2')(p1, p2)
 Len = lambda L : int(sqrt((L.p1.x - L.p2.x)**2 + (L.p1.y - L.p2.y)**2))
 
 
-Piece = Enum('Piece', ['X', 'O'])
-# TODO(josh): could use list comprehension to make an enum of all valid squares....
+Piece = Enum('Piece', ['N', 'X', 'O'])
+squares = [c+r for c in ['a', 'b', 'c'] for r in ['1', '2', '3']]
+Square = Enum('Squares', 
+  [bs + ss for bs in squares + ['xx'] for ss in squares]
+)
 
 class Board():
   def __init__(self):
@@ -122,7 +125,7 @@ class Board():
     row = None
     column = None
 
-    # switch stuff # TODO get rid of hardcode its wrong
+    # switch stuff
     if event.y < self.lines[board]["h1"].p1.y and event.y > self.lines[board]["v1"].p1.y:
       row = "1"
     elif event.y > self.lines[board]["h1"].p1.y and event.y < self.lines[board]["h2"].p1.y:
