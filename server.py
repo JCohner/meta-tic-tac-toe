@@ -5,6 +5,8 @@ import threading
 import signal
 import time
 
+from multiprocessing import Process
+
 import grpc
 
 from remote_calls.game_pb2_grpc import PiecePlacerServicer, add_PiecePlacerServicer_to_server
@@ -17,7 +19,8 @@ class PiecePlacer(PiecePlacerServicer):
 
     self.do_work = False
     self.thread_pool = futures.ThreadPoolExecutor(max_workers=10)
-    self.work_thread = threading.Thread(target=self.serve)
+    self.work_thread = Process(target=self.serve, name="PiecePlacer")
+    self.server = grpc.server(self.thread_pool)
 
   def ChooseSquare(self, request, context):
     self.place_request_queue.put(request)
@@ -27,7 +30,6 @@ class PiecePlacer(PiecePlacerServicer):
 
   def serve(self):
       port = "50051"
-      self.server = grpc.server(self.thread_pool)
       add_PiecePlacerServicer_to_server(self, self.server)
       self.server.add_insecure_port("[::]:" + port)
       self.server.start()
@@ -44,12 +46,8 @@ class PiecePlacer(PiecePlacerServicer):
       return
   
   def stop_work(self, *args):
-    if (self.do_work is True):
       self.do_work = False
-      self.work_thread.join()
-    else:
-      print("WARNING: not doing any work, meaningless call")
-      return
+      self.server.stop(1)
 
 if __name__ == "__main__":
     logging.basicConfig()

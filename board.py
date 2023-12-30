@@ -2,8 +2,11 @@ import tkinter as tk
 from collections import namedtuple
 from enum import Enum
 from math import sqrt
-
+import time
+from multiprocessing import Process, Lock
+import threading
 import logging
+
 from pprint import PrettyPrinter, pformat
 pp = PrettyPrinter(indent=4)
 
@@ -20,6 +23,11 @@ Piece = Enum('Piece', ['X', 'O'])
 
 class Board():
   def __init__(self):
+    self.lock = threading.Lock()
+    self.ev = threading.Event()
+    self.do_work = False
+    self.work_thread = Process(target=self.work_func, name="Board")
+
     self.root = tk.Tk()
     self.SIZE = 800
     self.CENTER = Point(self.SIZE/2, self.SIZE/2)
@@ -37,7 +45,31 @@ class Board():
 
     self.canvas.pack(anchor=tk.CENTER, expand=True)
     self.root.bind("<Button-1>", self.click_handler)
+
+    self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+  def work_func(self):
     self.root.mainloop()
+
+  def start_work(self):
+    if (self.do_work is False):
+      self.do_work = True
+      self.work_thread.start()
+    else:
+      print("WARNING: already doing work")
+      return
+  
+  def stop_work(self, *args):
+    if (self.do_work is True):
+      self.do_work = False
+      self.on_closing()
+    else:
+      print("WARNING: not doing any work, meaningless call")
+      return
+
+  def on_closing(self):
+    self.root.quit()
+    self.root.destroy()
 
   def generate_inner_boards(self, size):
     # accounts for padding away from wall
