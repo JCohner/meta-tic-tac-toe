@@ -21,7 +21,9 @@ class Worker():
       logging.error("Not working, not stopping work")
       return
     self.do_work.value = False
+    print("calling join")
     self.work_proc.join()
+    print("joined")
 
   def work_func(self):
     '''

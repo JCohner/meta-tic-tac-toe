@@ -7,22 +7,21 @@ gen_grpc:
 
 .PHONY: run
 run:
-	@python3 main.py
+	@source bin/activate && python3 tictac/main.py
 
 .PHONY: run_server
 run_server:
-	@python3 server.py
+	@source bin/activate &&python3 tictac/server.py
 
 .PHONY: run_client
 run_client:
-	@python3 client.py
+	@source bin/activate &&python3 tictac/client.py
 
+.PHONY: test
+test:
+	@pytest-3 tests/test_*.py
 
 # TODO
 .PHONY: flake8
 flake8:
 	@python3 -m flake8 || true
-
-.PHONY: test
-test:
-	@source bin/activate && pytest tests/Test*.py
