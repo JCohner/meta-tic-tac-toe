@@ -1,5 +1,18 @@
+# general python
 __pycache__
+*.egg-info
+
+# venv stuff
+bin/
+lib/
+lib64
+share
+pyvenv.cfg
+
+# application layer ignores
 logs
 *log
+
+
 # ignore generated proto and rpc files
 #remote_calls/game_*
