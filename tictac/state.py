@@ -5,14 +5,10 @@ from collections import namedtuple, Counter
 from enum import Enum
 
 from tictac.worker import Worker
-from tictac.board import Piece, squares 
+from tictac.helpers import Piece, squares, PlayState, GameState, Move 
 
 from pprint import PrettyPrinter
 pp = PrettyPrinter(indent = 4)
-
-Move = namedtuple('Move', 'piece square')
-PlayState = Enum('PlayState', ['IN_PLAY', 'X_WON', 'O_WON', 'TIE'])
-GameState = namedtuple('GameState', 'board play_state')
 
 class State(Worker):
   def __init__(self):
