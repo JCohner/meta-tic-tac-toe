@@ -11,27 +11,16 @@ from pprint import PrettyPrinter, pformat
 pp = PrettyPrinter(indent=4)
 
 from tictac.worker import Worker
-
-'''
-'Operator Overloads'
-'''
-Point = lambda x,y : namedtuple('Point', 'x y')(int(x),int(y))
-Line = lambda p1, p2 : namedtuple('Line', 'p1, p2')(p1, p2)
-Len = lambda L : int(sqrt((L.p1.x - L.p2.x)**2 + (L.p1.y - L.p2.y)**2))
-
-
-Piece = Enum('Piece', ['N', 'X', 'O'])
-squares = [c+r for c in ['a', 'b', 'c'] for r in ['1', '2', '3']]
-Square = Enum('Squares', 
-  [bs + ss for bs in squares + ['xx'] for ss in squares]
-)
+from tictac.helpers import Point, Line, Len, Piece, Move 
 
 class Board(Worker):
-  def __init__(self, state_connection=None):
+  def __init__(self, state_connection_sock=None):
     super().__init__("board")
-    self.kill_con, self.kill_recv = Pipe()
+    self.kill_con_sock, self.kill_recv_sock = Pipe()
 
-    self.refresh_period = 1/60
+    self.state_con_sock = state_connection_sock
+
+    self.refresh_period = 1/120 # made it 1/2 of 1/60 (desired) as we call it twice in func loop on two different sockets
 
     self.root = tk.Tk()
     self.SIZE = 800
@@ -54,13 +43,15 @@ class Board(Worker):
     self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
   def work_func(self):
-    while(self.do_work.value and not self.kill_recv.poll(self.refresh_period)): #implcitly has our referesh rate in it
+    while(self.do_work.value and not self.kill_recv_sock.poll(self.refresh_period)): #implcitly has our referesh rate in it
       self.root.update()
       # self.root.update_idletasks() # TODO(Josh): figure out if update every loop is overkill?
-
+      if (self.state_con_sock != None):
+        if (self.state_con_sock.poll(self.refresh_period)):
+          pass
 
   def on_closing(self):
-    self.kill_con.send("die")
+    self.kill_con_sock.send("die")
     time.sleep(self.refresh_period * 2) # give work function time to exit
     self.root.quit()
     self.root.destroy()
