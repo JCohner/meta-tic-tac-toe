@@ -21,6 +21,10 @@ run_client:
 test:
 	@pytest-3 tests/test_*.py
 
+.PHONY: update_tictac
+update_tictac:
+	@cd tictac && pip install ..
+
 # TODO
 .PHONY: flake8
 flake8:

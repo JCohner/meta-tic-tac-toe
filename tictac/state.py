@@ -16,7 +16,7 @@ GameState = namedtuple('GameState', 'board play_state')
 
 class State(Worker):
   def __init__(self):
-    super().__init__()
+    super().__init__("state")
     self.con,self.recv = Pipe()
     self.board_state = { x : { x: Piece.N for x in squares} for x in ['xx'] + squares }
     self.move_queue = Queue() # queue to hold state updates, elements added to this will be added to board

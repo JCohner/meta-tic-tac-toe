@@ -10,6 +10,8 @@ import logging
 from pprint import PrettyPrinter, pformat
 pp = PrettyPrinter(indent=4)
 
+from tictac.worker import Worker
+
 '''
 'Operator Overloads'
 '''
@@ -24,12 +26,9 @@ Square = Enum('Squares',
   [bs + ss for bs in squares + ['xx'] for ss in squares]
 )
 
-class Board():
-  def __init__(self):
-    self.lock = threading.Lock()
-    self.ev = threading.Event()
-    self.do_work = False
-    self.work_thread = Process(target=self.work_func, name="Board")
+class Board(Worker):
+  def __init__(self, state_connection=None):
+    super().__init__("board")
 
     self.root = tk.Tk()
     self.SIZE = 800
@@ -53,22 +52,6 @@ class Board():
 
   def work_func(self):
     self.root.mainloop()
-
-  def start_work(self):
-    if (self.do_work is False):
-      self.do_work = True
-      self.work_thread.start()
-    else:
-      print("WARNING: already doing work")
-      return
-  
-  def stop_work(self, *args):
-    if (self.do_work is True):
-      self.do_work = False
-      self.on_closing()
-    else:
-      print("WARNING: not doing any work, meaningless call")
-      return
 
   def on_closing(self):
     self.root.quit()
@@ -185,3 +168,4 @@ if __name__ == "__main__":
   logging.basicConfig(filename='logs/board.log', encoding='utf-8', level=logging.DEBUG)
   logging.getLogger().addHandler(logging.StreamHandler())
   b = Board()
+  b.start_work()
