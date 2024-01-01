@@ -3,7 +3,7 @@ from collections import namedtuple
 from enum import Enum
 from math import sqrt
 import time
-from multiprocessing import Process, Lock
+from multiprocessing import Process, Pipe
 import threading
 import logging
 
@@ -29,6 +29,9 @@ Square = Enum('Squares',
 class Board(Worker):
   def __init__(self, state_connection=None):
     super().__init__("board")
+    self.kill_con, self.kill_recv = Pipe()
+
+    self.refresh_period = 1/60
 
     self.root = tk.Tk()
     self.SIZE = 800
@@ -51,9 +54,14 @@ class Board(Worker):
     self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
   def work_func(self):
-    self.root.mainloop()
+    while(self.do_work.value and not self.kill_recv.poll(self.refresh_period)): #implcitly has our referesh rate in it
+      self.root.update()
+      # self.root.update_idletasks() # TODO(Josh): figure out if update every loop is overkill?
+
 
   def on_closing(self):
+    self.kill_con.send("die")
+    time.sleep(self.refresh_period * 2) # give work function time to exit
     self.root.quit()
     self.root.destroy()
 
