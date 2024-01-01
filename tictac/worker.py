@@ -3,9 +3,9 @@ from multiprocessing import Process, Value
 import time
 
 class Worker():
-  def __init__(self):
+  def __init__(self, proc_name):
     self.do_work = Value('i', False)
-    self.work_proc = Process(target=self.work_func, name="StateWorker")
+    self.work_proc = Process(target=self.work_func, name=proc_name)
 
   def start_work(self):
     if (self.do_work.value):
