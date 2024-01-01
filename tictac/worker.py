@@ -3,9 +3,10 @@ from multiprocessing import Process, Value
 import time
 
 class Worker():
-  def __init__(self, proc_name):
+  def __init__(self, proc_name, stop_func = None):
     self.do_work = Value('i', False)
     self.work_proc = Process(target=self.work_func, name=proc_name)
+    self.stop_func = stop_func
 
   def start_work(self):
     if (self.do_work.value):
@@ -21,6 +22,9 @@ class Worker():
       logging.error("Not working, not stopping work")
       return
     self.do_work.value = False
+    if (self.stop_func != None):
+      self.stop_func()
+
     print("calling join")
     self.work_proc.join()
     print("joined")

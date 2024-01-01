@@ -13,17 +13,11 @@ pp = PrettyPrinter(indent = 4)
 class State(Worker):
   def __init__(self):
     super().__init__("state")
-    self.con,self.recv = Pipe()
+    self.final_game_state_con_sock,self.final_game_state_recv_sock = Pipe()
     self.board_state = { x : { x: Piece.N for x in squares} for x in ['xx'] + squares }
     self.move_queue = Queue() # queue to hold state updates, elements added to this will be added to board
     self.player_turn = Piece.N # make some mechanism to decide first 
     self.play_state = PlayState.IN_PLAY
-
-  def toggle_player_state(self):
-    if (self.player_turn == Piece.X):
-      self.player_turn = Piece.O
-    elif (self.player_turn == Piece.O):
-      self.player_turn = Piece.X
 
   def update_state(self, square, piece):
     '''
@@ -52,6 +46,9 @@ class State(Worker):
       self.play_state = PlayState.X_WON if (piece == Piece.X) else PlayState.O_WON
       print(f"GAME OVER NICE JOB: {piece}")
 
+    # toggle player state
+    self.player_turn = Piece.X if self.player_turn is Piece.O else Piece.O
+
   def check_win(self, mbs):
     win_cons = [
       (mbs['a2'] == mbs['b2'] == mbs['c2']), # win_con_2
@@ -65,6 +62,9 @@ class State(Worker):
     ]
     return any(win_cons)
 
+  # def publish_update(self):
+    
+
   def work_func(self):
     while(self.do_work.value):
       #TODO(josh): choose first player
@@ -73,18 +73,18 @@ class State(Worker):
       if (self.do_work.value):
         move = self.move_queue.get() 
         self.update_state(*move)
-        self.toggle_player_state()
-
-    # publish game state
-    self.con.send(GameState(board=self.board_state, play_state=self.play_state))
-    self.con.close()
+        self.publish_update()
+        
+    # publish final game state
+    self.final_game_state_con_sock.send(GameState(board=self.board_state, play_state=self.play_state))
+    self.final_game_state_con_sock.close()
     logging.info(f"Work thread: {self.work_proc.pid} exit")
 
   def enqueue_move(self, move):
     self.move_queue.put(move)
 
   def get_final_state(self):
-    return self.recv.recv()
+    return self.final_game_state_recv_sock.recv()
 
 if __name__ == "__main__":
   logging.basicConfig(filename='logs/state.log', encoding='utf-8', level=logging.DEBUG)
