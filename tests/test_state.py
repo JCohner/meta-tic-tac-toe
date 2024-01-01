@@ -15,7 +15,7 @@ class TestState:
     s.enqueue_move(Move('a1a1', Piece.X))
     s.enqueue_move(Move('a1a2', Piece.X))
     s.enqueue_move(Move('a1a3', Piece.X))
-    time.sleep(1/5)
+    time.sleep(1/100)
     s.stop_work()
     assert s.get_final_state().board['xx']['a1'] == Piece.X
 
@@ -25,7 +25,7 @@ class TestState:
     s.enqueue_move(Move('c3a1', Piece.X))
     s.enqueue_move(Move('c3b2', Piece.X))
     s.enqueue_move(Move('c3c3', Piece.X))
-    time.sleep(1/5)
+    time.sleep(1/100)
     s.stop_work()
     assert s.get_final_state().board['xx']['c3'] == Piece.X
 
@@ -44,7 +44,7 @@ class TestState:
     s.enqueue_move(Move('c1b2', Piece.X))
     s.enqueue_move(Move('c1c3', Piece.X))
 
-    time.sleep(1/5)
+    time.sleep(1/100)
     s.stop_work()
 
     game_state = s.get_final_state()
