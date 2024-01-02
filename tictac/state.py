@@ -5,7 +5,7 @@ from collections import namedtuple, Counter
 from enum import Enum
 
 from tictac.worker import Worker
-from tictac.helpers import Piece, squares, PlayState, GameState, Move 
+from tictac.helpers import Piece, squares, PlayState, GameState, Move, SharedEnum 
 
 from pprint import PrettyPrinter
 pp = PrettyPrinter(indent = 4)
@@ -19,13 +19,8 @@ class State(Worker):
     self.board_update_queue = board_update_queue
     
     # need to make these pythons version of thread safe
-    self.player_turn = Value('i', Piece.X.value) # persist player turn as its int equivalent
-    self.get_player_turn = lambda : Piece(self.player_turn.value) # since we persist as a int, need wrapper to nicely return as enum
+    self.player_turn = SharedEnum(Piece.X)
     self.play_state = PlayState.IN_PLAY
-    
-  def set_player_turn(self, piece):
-    with self.player_turn.get_lock():
-      self.player_turn.value = piece.value
 
   def update_state(self, square, piece):
     '''
@@ -55,9 +50,9 @@ class State(Worker):
       print(f"GAME OVER NICE JOB: {piece}")
 
     # toggle player state
-    print(f"play turn is {self.get_player_turn()}")
-    self.set_player_turn(Piece.X if self.get_player_turn() == Piece.O else Piece.O)
-    print(f"play turn now is {self.get_player_turn()}")
+    print(f"play turn is {self.player_turn.get_value()}")
+    self.player_turn.set_value(Piece.X if self.player_turn.get_value() == Piece.O else Piece.O)
+    print(f"play turn now is {self.player_turn.get_value()}")
 
 
   def check_win(self, mbs):
@@ -94,8 +89,8 @@ class State(Worker):
 
   # this allows the state to automatically determine which piece needs to be placed
   def enqueue_place(self, square):
-    print(f"Enqueing move of {self.get_player_turn()}")
-    self.enqueue_move(Move(piece=self.get_player_turn(), square=square))
+    print(f"Enqueing move of {self.player_turn.get_value()}")
+    self.enqueue_move(Move(piece=self.player_turn.get_value(), square=square))
 
   def get_final_state(self):
     return self.final_game_state_recv_sock.recv()
