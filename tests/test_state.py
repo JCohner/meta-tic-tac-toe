@@ -1,3 +1,4 @@
+import pytest
 import logging
 import time
 
@@ -34,7 +35,7 @@ class TestState:
     s.start_work()
     s.enqueue_move(Move(square = 'b1a3', piece = Piece.X))
     s.enqueue_move(Move(square = 'b1c1', piece = Piece.X))
-    s.enqueue_move(Move(square = 'b13c2', piece = Piece.X))
+    s.enqueue_move(Move(square = 'b1c2', piece = Piece.X))
     time.sleep(1/100)
     s.stop_work()
     assert s.get_final_state().board['xx']['b1'] == Piece.N
@@ -42,6 +43,7 @@ class TestState:
   def test_big_board_win(self):
     s = State()
     s.start_work()
+    
     s.enqueue_move(Move(square = 'c3a1', piece = Piece.X))
     s.enqueue_move(Move(square = 'c3b2', piece = Piece.X))
     s.enqueue_move(Move(square = 'c3c3', piece = Piece.X))
@@ -65,3 +67,10 @@ class TestState:
     assert game_state.board['xx']['c2'] == Piece.X
     assert game_state.board['xx']['c1'] == Piece.X
     assert game_state.play_state == PlayState.X_WON
+
+  def test_invalid_square(self):
+    s = State()
+    s.start_work()
+    with pytest.raises(ValueError):
+      s.enqueue_move(Move(square = 'c3a41', piece = Piece.X))
+    s.stop_work()

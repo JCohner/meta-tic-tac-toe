@@ -5,7 +5,7 @@ from collections import namedtuple, Counter
 from enum import Enum
 
 from tictac.worker import Worker
-from tictac.helpers import Piece, squares, PlayState, GameState, Move, SharedEnum 
+from tictac.helpers import Piece, squares, PlayState, GameState, Move, SharedEnum, valid_squares 
 
 from pprint import PrettyPrinter
 pp = PrettyPrinter(indent = 4)
@@ -20,7 +20,7 @@ class State(Worker):
     
     # need to make these pythons version of thread safe
     self.player_turn = SharedEnum(Piece.X)
-    self.play_state = PlayState.IN_PLAY
+    self.play_state = SharedEnum(PlayState.IN_PLAY)
 
   def update_state(self, square, piece):
     '''
@@ -37,7 +37,7 @@ class State(Worker):
     # check win condition if more than 3 of same piece have been played
     is_won = False
     if (cnt[piece] >= 3):
-      is_won = self.check_win(mbs)
+      is_won = self.check_win(mbs, piece)
 
     # if the board is one and its not the main board
     if (is_won and square[:2] != 'xx'):
@@ -46,25 +46,23 @@ class State(Worker):
       self.update_state(f'xx{square[:2]}', piece)
 
     elif(is_won):
-      self.play_state = PlayState.X_WON if (piece == Piece.X) else PlayState.O_WON
+      self.play_state.set_value(PlayState.X_WON if (piece == Piece.X) else PlayState.O_WON)
       print(f"GAME OVER NICE JOB: {piece}")
 
     # toggle player state
-    print(f"play turn is {self.player_turn.get_value()}")
     self.player_turn.set_value(Piece.X if self.player_turn.get_value() == Piece.O else Piece.O)
-    print(f"play turn now is {self.player_turn.get_value()}")
 
 
-  def check_win(self, mbs):
+  def check_win(self, mbs, piece):
     win_cons = [
-      (mbs['a2'] == mbs['b2'] == mbs['c2']), # win_con_2
-      (mbs['b1'] == mbs['b2'] == mbs['b3']), # win_con_5
-      (mbs['a1'] == mbs['b2'] == mbs['c3']), # win_con_7
-      (mbs['a3'] == mbs['b2'] == mbs['c1']), # win_con_8
-      (mbs['a1'] == mbs['a2'] == mbs['a3']), # win_con_4
-      (mbs['c1'] == mbs['c2'] == mbs['c3']), # win_con_6
-      (mbs['a1'] == mbs['b1'] == mbs['c1']), # win_con_1
-      (mbs['a3'] == mbs['b3'] == mbs['c3']), # win_con_5
+      (mbs['a2'] == mbs['b2'] == mbs['c2'] == piece), # win_con_2
+      (mbs['b1'] == mbs['b2'] == mbs['b3'] == piece), # win_con_5
+      (mbs['a1'] == mbs['b2'] == mbs['c3'] == piece), # win_con_7
+      (mbs['a3'] == mbs['b2'] == mbs['c1'] == piece), # win_con_8
+      (mbs['a1'] == mbs['a2'] == mbs['a3'] == piece), # win_con_4
+      (mbs['c1'] == mbs['c2'] == mbs['c3'] == piece), # win_con_6
+      (mbs['a1'] == mbs['b1'] == mbs['c1'] == piece), # win_con_1
+      (mbs['a3'] == mbs['b3'] == mbs['c3'] == piece), # win_con_5
     ]
     return any(win_cons)
 
@@ -80,11 +78,13 @@ class State(Worker):
           self.board_update_queue.put(move)
         
     # publish final game state
-    self.final_game_state_con_sock.send(GameState(board=self.board_state, play_state=self.play_state))
+    self.final_game_state_con_sock.send(GameState(board=self.board_state, play_state=self.play_state.get_value()))
     self.final_game_state_con_sock.close()
     logging.info(f"Work thread: {self.work_proc.pid} exit")
 
   def enqueue_move(self, move):
+    if move.square not in valid_squares:
+      raise ValueError(f"Must be a valid square")
     self.move_queue.put(move)
 
   # this allows the state to automatically determine which piece needs to be placed
