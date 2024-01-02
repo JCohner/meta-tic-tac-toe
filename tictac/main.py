@@ -22,18 +22,22 @@ class MetaTicTacToe(Worker):
     self.board = Board(self.move_queue)
 
     #start server
-    self.peice_place_cv = threading.Condition()
-    self.piece_place_server = PiecePlacer(self.peice_place_cv )
+    self.piece_place_server = PiecePlacer()
 
     self.state = State(self.move_queue)
 
   def work_func(self):
     while(self.do_work.value):
-      with self.peice_place_cv:
-        self.peice_place_cv.wait(timeout = 1)
+      # check if a client has sent a piece move
+      if(self.piece_place_server.place_request_queue.qsize() != 0):
         req = self.piece_place_server.place_request_queue.get()
         move = Move(Piece(req.piece), req.square)
         self.state.enqueue_move(move)
+      # check if the board has registered a piece move
+      if (self.board.piece_place_queue.qsize() != 0):
+        square = self.board.piece_place_queue.get()
+        self.state.enqueue_place(square)
+
 
     print("exit")
 

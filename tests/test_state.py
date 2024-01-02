@@ -29,6 +29,16 @@ class TestState:
     s.stop_work()
     assert s.get_final_state().board['xx']['c3'] == Piece.X
 
+  def test_mini_board_not_win(self):
+    s = State()
+    s.start_work()
+    s.enqueue_move(Move(square = 'b1a3', piece = Piece.X))
+    s.enqueue_move(Move(square = 'b1c1', piece = Piece.X))
+    s.enqueue_move(Move(square = 'b13c2', piece = Piece.X))
+    time.sleep(1/100)
+    s.stop_work()
+    assert s.get_final_state().board['xx']['b1'] == Piece.N
+    
   def test_big_board_win(self):
     s = State()
     s.start_work()

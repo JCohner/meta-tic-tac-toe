@@ -3,7 +3,7 @@ from collections import namedtuple
 from enum import Enum
 from math import sqrt
 import time
-from multiprocessing import Process, Pipe
+from multiprocessing import Process, Pipe, Queue
 import threading
 import logging
 
@@ -16,9 +16,12 @@ from tictac.helpers import Point, Line, Len, Piece, Move
 class Board(Worker):
   def __init__(self, state_update_queue=None):
     super().__init__("board")
+
     self.kill_con_sock, self.kill_recv_sock = Pipe()
 
     self.state_update_queue = state_update_queue
+
+    self.piece_place_queue = Queue()
 
     self.refresh_period = 1/60
 
@@ -164,7 +167,8 @@ class Board(Worker):
     mini_board = self.get_board(click_point, "xx")
     square = self.get_board(click_point, mini_board)
     print(mini_board + square)
-    self.generate_shape(Piece.X, mini_board + square)
+    self.piece_place_queue.put(mini_board + square)
+    # self.generate_shape(Piece.X, mini_board + square)
 
   def attach_state_update_queue(self, update_queue):
     self.state_update_queue = update_queue
