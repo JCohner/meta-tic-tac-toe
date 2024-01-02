@@ -23,7 +23,6 @@ def run():
 
   args = parser.parse_args()
   piece = args.piece 
-  print(piece)
   if ((piece.lower() != 'x') and (piece.lower() != 'o')):
     logging.error(f"Cmon bozo you need to specify the piece as X or O. Your answer: {piece} doesnt cut it")
     return

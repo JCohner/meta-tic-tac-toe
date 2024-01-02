@@ -18,13 +18,23 @@ Enums
 Piece = Enum('Piece', ['N', 'X', 'O'])
 
 squares = [c+r for c in ['a', 'b', 'c'] for r in ['1', '2', '3']]
+MiniBoard = Enum("MiniBoard", 
+  [b for b in squares + ['N']]
+)
+
 Square = Enum('Squares', 
   [bs + ss for bs in squares + ['xx'] for ss in squares]
 )
 valid_squares = [s.name for s in Square]
 
 Move = namedtuple('Move', 'piece square')
-PlayState = Enum('PlayState', ['IN_PLAY', 'X_WON', 'O_WON', 'TIE'])
+PlayState = Enum('PlayState', ['IN_PLAY', 
+                               'X_MINIBOARD_SELECT',
+                               'O_MINIBOARD_SELECT',
+                               'X_WON',
+                               'O_WON',
+                               'TIE'])
+
 GameState = namedtuple('GameState', 'board play_state')
 
 '''
@@ -44,3 +54,7 @@ class SharedEnum():
   def set_value(self, enum):
     with self.__safe_val__.get_lock():
       self.__safe_val__.value = enum.value
+
+  def set_value_by_name(self, enum_name):
+    with self.__safe_val__.get_lock():
+      self.__safe_val__.value = self.enum_type[enum_name].value

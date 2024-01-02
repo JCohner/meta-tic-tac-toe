@@ -5,7 +5,7 @@ from collections import namedtuple, Counter
 from enum import Enum
 
 from tictac.worker import Worker
-from tictac.helpers import Piece, squares, PlayState, GameState, Move, SharedEnum, valid_squares 
+from tictac.helpers import Piece, squares, PlayState, GameState, Move, SharedEnum, valid_squares, MiniBoard
 
 from pprint import PrettyPrinter
 pp = PrettyPrinter(indent = 4)
@@ -17,12 +17,34 @@ class State(Worker):
     self.board_state = { x : { x: Piece.N for x in squares} for x in ['xx'] + squares }
     self.move_queue = Queue() # queue to hold state updates, elements added to this will be added to board
     self.board_update_queue = board_update_queue
-    
-    # need to make these pythons version of thread safe
+
+    '''
+    Game state variables
+    '''
     self.player_turn = SharedEnum(Piece.X)
     self.play_state = SharedEnum(PlayState.IN_PLAY)
+    self.active_mini_board = SharedEnum(MiniBoard.N)
 
   def update_state(self, square, piece):
+    # Meta Tic Tac Toe Mechanics
+    pass_through_if_main_board = True if (square[:2] == 'xx') else False
+    if (not pass_through_if_main_board):
+      allowed_miniboard = self.active_mini_board.get_value()
+      play_state = self.play_state.get_value()
+
+      if ((play_state == PlayState.O_MINIBOARD_SELECT) or (play_state == PlayState.O_MINIBOARD_SELECT)):
+        logging.info(f"Player {piece} is setting allowed mini board to: {square[:2]}")
+        self.active_mini_board.set_value_by_name(square[:2])
+        self.play_state.set_value(PlayState.IN_PLAY)
+        return False
+      else:
+        is_allowed_miniboard = True if (MiniBoard[square[:2]] ==  allowed_miniboard) else False
+        is_first_place = True if (self.active_mini_board.get_value() == MiniBoard.N) else False
+        if (not is_allowed_miniboard and not is_first_place):
+          logging.info(f"Player {piece.name} attempted to play in an invalid square: {square} must play in miniboard: {allowed_miniboard}")
+          return False
+
+
     '''
     update self.board_state
     detect if a tic tac toe has been made (update self.board_state['xx'][square]), signal to main
@@ -31,7 +53,7 @@ class State(Worker):
 
     # check if we need to do stuff for square
     mbs = self.board_state[square[:2]]
-    logging.info(pp.pformat(mbs))
+    # logging.info(pp.pformat(mbs))
     # pp.pprint(mbs)
     cnt = Counter(mbs.values())
     # check win condition if more than 3 of same piece have been played
@@ -53,9 +75,25 @@ class State(Worker):
       self.play_state.set_value(PlayState.X_WON if (piece == Piece.X) else PlayState.O_WON)
       print(f"GAME OVER NICE JOB: {piece}")
 
-    # toggle player state
-    self.player_turn.set_value(Piece.X if self.player_turn.get_value() == Piece.O else Piece.O)
+    # toggle player state # TODO (i think we may want to nest this in if not passthrough)
+    
+    # increment logic not to be done by main board state update
+    if (not pass_through_if_main_board):
+      self.player_turn.set_value(Piece.X if self.player_turn.get_value() == Piece.O else Piece.O)
+      self.increment_next_mini_board(piece, square)
+      print(f"PlayState is: {self.play_state.get_value()}\nNext playable board is: {self.active_mini_board.get_value()}")
 
+    return True
+
+  def increment_next_mini_board(self, piece, square):
+    current_inner_square = square[2:]
+    # check if destination board is not won
+    if self.board_state['xx'][current_inner_square] == Piece.N:
+      self.active_mini_board.set_value_by_name(current_inner_square)
+    else:
+      print("Sending opponent to already won board waiting for mini board selection")
+      self.play_state.set_value(PlayState.X_MINIBOARD_SELECT if (piece == Piece.X) else PlayState.O_MINIBOARD_SELECT)
+      self.active_mini_board.set_value(MiniBoard.N)
 
   def check_win(self, mbs, piece):
     win_cons = [
@@ -77,8 +115,8 @@ class State(Worker):
         time.sleep(1/120)
       if (self.do_work.value):
         move = self.move_queue.get()
-        self.update_state(move.square, move.piece)
-        if (self.board_update_queue != None):
+        valid_update = self.update_state(move.square, move.piece)
+        if (self.board_update_queue != None and valid_update):
           self.board_update_queue.put(move)
         
     # publish final game state
