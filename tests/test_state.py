@@ -12,9 +12,9 @@ class TestState:
     # logging.getLogger().addHandler(logging.StreamHandler())
     s = State()
     s.start_work()
-    s.enqueue_move(Move('a1a1', Piece.X))
-    s.enqueue_move(Move('a1a2', Piece.X))
-    s.enqueue_move(Move('a1a3', Piece.X))
+    s.enqueue_move(Move(square = 'a1a1', piece = Piece.X))
+    s.enqueue_move(Move(square = 'a1a2', piece = Piece.X))
+    s.enqueue_move(Move(square = 'a1a3', piece = Piece.X))
     time.sleep(1/100)
     s.stop_work()
     assert s.get_final_state().board['xx']['a1'] == Piece.X
@@ -22,9 +22,9 @@ class TestState:
   def test_mini_board_win_2(self):
     s = State()
     s.start_work()
-    s.enqueue_move(Move('c3a1', Piece.X))
-    s.enqueue_move(Move('c3b2', Piece.X))
-    s.enqueue_move(Move('c3c3', Piece.X))
+    s.enqueue_move(Move(square = 'c3a1', piece = Piece.X))
+    s.enqueue_move(Move(square = 'c3b2', piece = Piece.X))
+    s.enqueue_move(Move(square = 'c3c3', piece = Piece.X))
     time.sleep(1/100)
     s.stop_work()
     assert s.get_final_state().board['xx']['c3'] == Piece.X
@@ -32,17 +32,17 @@ class TestState:
   def test_big_board_win(self):
     s = State()
     s.start_work()
-    s.enqueue_move(Move('c3a1', Piece.X))
-    s.enqueue_move(Move('c3b2', Piece.X))
-    s.enqueue_move(Move('c3c3', Piece.X))
+    s.enqueue_move(Move(square = 'c3a1', piece = Piece.X))
+    s.enqueue_move(Move(square = 'c3b2', piece = Piece.X))
+    s.enqueue_move(Move(square = 'c3c3', piece = Piece.X))
 
-    s.enqueue_move(Move('c2a1', Piece.X))
-    s.enqueue_move(Move('c2b2', Piece.X))
-    s.enqueue_move(Move('c2c3', Piece.X))
+    s.enqueue_move(Move(square = 'c2a1', piece = Piece.X))
+    s.enqueue_move(Move(square = 'c2b2', piece = Piece.X))
+    s.enqueue_move(Move(square = 'c2c3', piece = Piece.X))
 
-    s.enqueue_move(Move('c1a1', Piece.X))
-    s.enqueue_move(Move('c1b2', Piece.X))
-    s.enqueue_move(Move('c1c3', Piece.X))
+    s.enqueue_move(Move(square = 'c1a1', piece = Piece.X))
+    s.enqueue_move(Move(square = 'c1b2', piece = Piece.X))
+    s.enqueue_move(Move(square = 'c1c3', piece = Piece.X))
 
     time.sleep(1/100)
     s.stop_work()
