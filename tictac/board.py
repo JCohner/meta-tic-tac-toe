@@ -162,13 +162,22 @@ class Board(Worker):
       # throw err
       pass
 
+  def check_valid_click(self, square):
+    if '?' in square:
+      logging.error(f"Invalid board click: {square}")
+      return False
+    return True
+
   def click_handler(self, event):
     click_point = Point(event.x, event.y)
     mini_board = self.get_board(click_point, "xx")
+    if not self.check_valid_click(mini_board):
+      return
     square = self.get_board(click_point, mini_board)
-    print(mini_board + square)
+    if not self.check_valid_click(mini_board + square):
+      return 
+
     self.piece_place_queue.put(mini_board + square)
-    # self.generate_shape(Piece.X, mini_board + square)
 
   def attach_state_update_queue(self, update_queue):
     self.state_update_queue = update_queue

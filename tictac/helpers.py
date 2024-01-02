@@ -21,6 +21,7 @@ squares = [c+r for c in ['a', 'b', 'c'] for r in ['1', '2', '3']]
 Square = Enum('Squares', 
   [bs + ss for bs in squares + ['xx'] for ss in squares]
 )
+valid_squares = [s.name for s in Square]
 
 Move = namedtuple('Move', 'piece square')
 PlayState = Enum('PlayState', ['IN_PLAY', 'X_WON', 'O_WON', 'TIE'])

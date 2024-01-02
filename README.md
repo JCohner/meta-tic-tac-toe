@@ -2,6 +2,7 @@
 Name pending.
 
 ## Current TODOs:
-- [ ] Win detection seems messed up
-- [ ] Get pieces to switch when clicking on board
-- [ ] not break when click out of bounds
+- [x] Win detection seems messed up
+- [ ] mark squares with peice when won
+- [x] Get pieces to switch when clicking on board
+- [x] not break when click out of bounds
