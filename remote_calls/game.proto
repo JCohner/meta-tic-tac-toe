@@ -6,17 +6,12 @@ service PiecePlacer {
   rpc ChooseSquare (PlayerChoice) returns (Reply) {}
 }
 
-enum Piece {
-  O = 0;
-  X = 1;
-}
-
 // TODO could write a piece of code that generates all valid squares
 
 // The request message containing the user's name.
 message PlayerChoice {
   string square = 1;
-  Piece piece = 2;
+  int32 piece = 2;
 }
 
 // The response message containing the greetings

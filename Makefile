@@ -23,7 +23,7 @@ test:
 
 .PHONY: update_tictac
 update_tictac:
-	@cd tictac && pip install ..
+	@cd tictac && pip install --editable ..
 
 # TODO
 .PHONY: flake8

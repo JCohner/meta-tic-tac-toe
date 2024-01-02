@@ -1,6 +1,6 @@
 import signal
 import threading
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 import time
 import logging
 import os
@@ -9,26 +9,31 @@ from tictac.server import PiecePlacer
 from tictac.board import Board
 from tictac.state import State
 from tictac.worker import Worker 
-
+from tictac.helpers import Move, Piece
 
 class MetaTicTacToe(Worker):
   def __init__(self):
     super().__init__("main")
     self.keep_alive = True
 
+    self.move_queue = Queue()
+
     # spawn board
-    self.board = Board()
+    self.board = Board(self.move_queue)
 
     #start server
     self.peice_place_cv = threading.Condition()
     self.piece_place_server = PiecePlacer(self.peice_place_cv )
 
-    self.state = State()
+    self.state = State(self.move_queue)
 
   def work_func(self):
     while(self.do_work.value):
       with self.peice_place_cv:
         self.peice_place_cv.wait(timeout = 1)
+        req = self.piece_place_server.place_request_queue.get()
+        move = Move(Piece(req.piece), req.square)
+        self.state.enqueue_move(move)
 
     print("exit")
 

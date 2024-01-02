@@ -6,7 +6,7 @@ from remote_calls import game_pb2 as remote__calls_dot_game__pb2
 
 
 class PiecePlacerStub(object):
-    """The greeting service definition.
+    """Piece Placer Service Definition
     """
 
     def __init__(self, channel):
@@ -23,11 +23,11 @@ class PiecePlacerStub(object):
 
 
 class PiecePlacerServicer(object):
-    """The greeting service definition.
+    """Piece Placer Service Definition
     """
 
     def ChooseSquare(self, request, context):
-        """Sends a greeting
+        """Lets player choose square to place piece
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -49,7 +49,7 @@ def add_PiecePlacerServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class PiecePlacer(object):
-    """The greeting service definition.
+    """Piece Placer Service Definition
     """
 
     @staticmethod

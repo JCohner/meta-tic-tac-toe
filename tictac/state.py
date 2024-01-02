@@ -11,13 +11,14 @@ from pprint import PrettyPrinter
 pp = PrettyPrinter(indent = 4)
 
 class State(Worker):
-  def __init__(self):
+  def __init__(self, board_update_queue=None):
     super().__init__("state")
     self.final_game_state_con_sock,self.final_game_state_recv_sock = Pipe()
     self.board_state = { x : { x: Piece.N for x in squares} for x in ['xx'] + squares }
     self.move_queue = Queue() # queue to hold state updates, elements added to this will be added to board
     self.player_turn = Piece.N # make some mechanism to decide first 
     self.play_state = PlayState.IN_PLAY
+    self.board_update_queue = board_update_queue
 
   def update_state(self, square, piece):
     '''
@@ -62,18 +63,15 @@ class State(Worker):
     ]
     return any(win_cons)
 
-  # def publish_update(self):
-    
-
   def work_func(self):
     while(self.do_work.value):
       #TODO(josh): choose first player
       while (self.move_queue.qsize() == 0 and self.do_work.value):
         time.sleep(1/120)
       if (self.do_work.value):
-        move = self.move_queue.get() 
-        self.update_state(*move)
-        self.publish_update()
+        move = self.move_queue.get()
+        self.update_state(move.square, move.piece)
+        self.board_update_queue.put(move)
         
     # publish final game state
     self.final_game_state_con_sock.send(GameState(board=self.board_state, play_state=self.play_state))

@@ -14,13 +14,13 @@ from tictac.worker import Worker
 from tictac.helpers import Point, Line, Len, Piece, Move 
 
 class Board(Worker):
-  def __init__(self, state_connection_sock=None):
+  def __init__(self, state_update_queue=None):
     super().__init__("board")
     self.kill_con_sock, self.kill_recv_sock = Pipe()
 
-    self.state_con_sock = state_connection_sock
+    self.state_update_queue = state_update_queue
 
-    self.refresh_period = 1/120 # made it 1/2 of 1/60 (desired) as we call it twice in func loop on two different sockets
+    self.refresh_period = 1/60
 
     self.root = tk.Tk()
     self.SIZE = 800
@@ -46,9 +46,10 @@ class Board(Worker):
     while(self.do_work.value and not self.kill_recv_sock.poll(self.refresh_period)): #implcitly has our referesh rate in it
       self.root.update()
       # self.root.update_idletasks() # TODO(Josh): figure out if update every loop is overkill?
-      if (self.state_con_sock != None):
-        if (self.state_con_sock.poll(self.refresh_period)):
-          pass
+      if (self.state_update_queue != None):
+        if (self.state_update_queue.qsize() != 0):
+          move = self.state_update_queue.get()
+          self.generate_shape(move.piece, move.square)
 
   def on_closing(self):
     self.kill_con_sock.send("die")
@@ -142,17 +143,19 @@ class Board(Worker):
           #   self.canvas.create_text(*p, text = key+j+i)
       self.centers[key] = temp_d
 
-  def generate_shape(self, shape, square):
+  # place a piece of corresponding shape on corresponding square
+  def generate_shape(self, piece, square):
     p = self.centers[square[:2]][square[2:]]
     size_mod = Len(self.lines[square[:2]]['h1']) * 1/4
     corners = (p.x - size_mod/2, p.y - size_mod/2), (p.x + size_mod/2, p.y + size_mod/2)
     other_corners = (p.x - size_mod/2, p.y + size_mod/2), (p.x + size_mod/2, p.y - size_mod/2)
-    if (shape == Piece.O):
+    if (piece == Piece.O):
       self.canvas.create_oval(*corners, outline='red', width = 4)
-    elif (shape == Piece.X):
+    elif (piece == Piece.X):
       self.canvas.create_line(*corners, width = 4, fill = 'red')
       self.canvas.create_line(*other_corners, width = 4, fill = 'red')
     else:
+      logging.error(f"WRONG PIECE SPECCED:{piece}")
       # throw err
       pass
 
@@ -162,6 +165,9 @@ class Board(Worker):
     square = self.get_board(click_point, mini_board)
     print(mini_board + square)
     self.generate_shape(Piece.X, mini_board + square)
+
+  def attach_state_update_queue(self, update_queue):
+    self.state_update_queue = update_queue
 
 if __name__ == "__main__":
   logging.basicConfig(filename='logs/board.log', encoding='utf-8', level=logging.DEBUG)

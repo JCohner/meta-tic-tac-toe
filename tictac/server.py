@@ -1,11 +1,10 @@
 from concurrent import futures
 import logging
-import queue
 import threading
 import signal
 import time
 
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 
 import grpc
 
@@ -13,6 +12,7 @@ from remote_calls.game_pb2_grpc import PiecePlacerServicer, add_PiecePlacerServi
 from remote_calls.game_pb2 import Reply, PlayerChoice
 
 from tictac.worker import Worker
+from tictac.helpers import Piece, Move
 
 class PiecePlacer(PiecePlacerServicer, Worker):
   def __init__(self, cond_var = threading.Condition()):
@@ -20,7 +20,7 @@ class PiecePlacer(PiecePlacerServicer, Worker):
     self.server = grpc.server(self.thread_pool)
     super().__init__("server", lambda: self.server.stop(1))
 
-    self.place_request_queue = queue.Queue(maxsize = 81) # queue of player choices
+    self.place_request_queue = Queue(maxsize = 81) # queue of player choices
     self.cv = cond_var
 
 
@@ -28,7 +28,7 @@ class PiecePlacer(PiecePlacerServicer, Worker):
     self.place_request_queue.put(request)
     with self.cv:
       self.cv.notify()
-    return Reply(message=f"Player {str(request.piece)} requested place on square {request.square}")
+    return Reply(message=f"Player {Piece(request.piece).name} requested place on square {request.square}")
 
   def work_func(self):
       port = "50051"
