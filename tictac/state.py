@@ -71,7 +71,8 @@ class State(Worker):
       if (self.do_work.value):
         move = self.move_queue.get()
         self.update_state(move.square, move.piece)
-        self.board_update_queue.put(move)
+        if (self.board_update_queue != None):
+          self.board_update_queue.put(move)
         
     # publish final game state
     self.final_game_state_con_sock.send(GameState(board=self.board_state, play_state=self.play_state))
@@ -90,9 +91,9 @@ if __name__ == "__main__":
   s = State()
   s.start_work()
 
-  s.enqueue_move(Move('a1a1', Piece.X))
-  s.enqueue_move(Move('a1a2', Piece.X))
-  s.enqueue_move(Move('a1a3', Piece.X))
+  s.enqueue_move(Move(square = 'a1a1', piece = Piece.X))
+  s.enqueue_move(Move(square = 'a1a2', piece = Piece.X))
+  s.enqueue_move(Move(square ='a1a3', piece = Piece.X))
 
   time.sleep(1/60)
   s.stop_work()
