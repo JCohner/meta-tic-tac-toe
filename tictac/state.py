@@ -42,6 +42,10 @@ class State(Worker):
     # if the board is one and its not the main board
     if (is_won and square[:2] != 'xx'):
       logging.info(f"Player {piece} won board {square[:2]}")
+      # mark on board
+      if (self.board_update_queue != None):
+        self.board_update_queue.put(Move(piece=piece, square=f"xx{square[:2]}"))
+
       # now check big board:
       self.update_state(f'xx{square[:2]}', piece)
 
