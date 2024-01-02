@@ -1,5 +1,5 @@
 import logging
-from multiprocessing import Process, Queue, Pipe
+from multiprocessing import Process, Queue, Pipe, Value
 import time
 from collections import namedtuple, Counter
 from enum import Enum
@@ -16,9 +16,16 @@ class State(Worker):
     self.final_game_state_con_sock,self.final_game_state_recv_sock = Pipe()
     self.board_state = { x : { x: Piece.N for x in squares} for x in ['xx'] + squares }
     self.move_queue = Queue() # queue to hold state updates, elements added to this will be added to board
-    self.player_turn = Piece.N # make some mechanism to decide first 
-    self.play_state = PlayState.IN_PLAY
     self.board_update_queue = board_update_queue
+    
+    # need to make these pythons version of thread safe
+    self.player_turn = Value('i', Piece.X.value) # persist player turn as its int equivalent
+    self.get_player_turn = lambda : Piece(self.player_turn.value) # since we persist as a int, need wrapper to nicely return as enum
+    self.play_state = PlayState.IN_PLAY
+    
+  def set_player_turn(self, piece):
+    with self.player_turn.get_lock():
+      self.player_turn.value = piece.value
 
   def update_state(self, square, piece):
     '''
@@ -48,7 +55,10 @@ class State(Worker):
       print(f"GAME OVER NICE JOB: {piece}")
 
     # toggle player state
-    self.player_turn = Piece.X if self.player_turn is Piece.O else Piece.O
+    print(f"play turn is {self.get_player_turn()}")
+    self.set_player_turn(Piece.X if self.get_player_turn() == Piece.O else Piece.O)
+    print(f"play turn now is {self.get_player_turn()}")
+
 
   def check_win(self, mbs):
     win_cons = [
@@ -81,6 +91,11 @@ class State(Worker):
 
   def enqueue_move(self, move):
     self.move_queue.put(move)
+
+  # this allows the state to automatically determine which piece needs to be placed
+  def enqueue_place(self, square):
+    print(f"Enqueing move of {self.get_player_turn()}")
+    self.enqueue_move(Move(piece=self.get_player_turn(), square=square))
 
   def get_final_state(self):
     return self.final_game_state_recv_sock.recv()
