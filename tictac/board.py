@@ -152,14 +152,17 @@ class Board(Worker):
     size_mod = Len(self.lines[square[:2]]['h1']) * 1/4
     corners = (p.x - size_mod/2, p.y - size_mod/2), (p.x + size_mod/2, p.y + size_mod/2)
     other_corners = (p.x - size_mod/2, p.y + size_mod/2), (p.x + size_mod/2, p.y - size_mod/2)
+    print(f"size is {size_mod}")
+    width_mod = size_mod / 12.5
+
     if (piece == Piece.O):
-      self.canvas.create_oval(*corners, outline='red', width = 4)
+      self.canvas.create_oval(*corners, outline='black', width = width_mod)
     elif (piece == Piece.X):
-      self.canvas.create_line(*corners, width = 4, fill = 'red')
-      self.canvas.create_line(*other_corners, width = 4, fill = 'red')
+      self.canvas.create_line(*corners, width = width_mod, fill = 'black')
+      self.canvas.create_line(*other_corners, width = width_mod, fill = 'black')
     else:
       logging.error(f"WRONG PIECE SPECCED:{piece}")
-      # throw err
+      raise ValueError(f"Invalid piece specified: {piece}")
       pass
 
   def check_valid_click(self, square):
