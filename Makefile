@@ -15,7 +15,7 @@ run_server:
 
 .PHONY: run_client
 run_client:
-	@source bin/activate &&python3 tictac/client.py
+	@source bin/activate && python3 tictac/client.py -s $(s) -p $(p)
 
 .PHONY: test
 test:
