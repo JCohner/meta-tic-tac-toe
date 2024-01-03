@@ -88,7 +88,12 @@ class State(Worker):
 
     elif(is_won):
       self.play_state.set_value(PlayState.X_WON if (piece == Piece.X) else PlayState.O_WON)
+      self.board_update_queue.put(StateUpdate(move = None, 
+                                        play_state = self.play_state.get_value(),
+                                        player_turn = self.player_turn.get_value(),
+                                        active_mini_board = None))
       print(f"GAME OVER NICE JOB: {piece}")
+      return False
 
     # toggle player state # TODO (i think we may want to nest this in if not passthrough)
     
