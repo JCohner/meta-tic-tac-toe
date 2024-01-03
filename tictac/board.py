@@ -34,6 +34,7 @@ class Board(Worker):
 
     self.lines = {}
     self.centers = {}
+    self.mini_board_indicator_tk_ids = {}
 
     self.canvas = tk.Canvas(self.root, width = self.SIZE, height = self.SIZE, bg='white')
     self.generate_board(self.CENTER, 700, "xx")
@@ -60,30 +61,36 @@ class Board(Worker):
       * Move field only, represents large X or O being drawn over miniboard
       * Text fields only, represents the end of miniboard selection
       '''
-      
+
       if (self.state_update_queue != None):
         if (self.state_update_queue.qsize() != 0):
           update = self.state_update_queue.get()
           if update.move != None:
             self.generate_shape(update.move.piece, update.move.square)
           if update.play_state != None:
-            self.update_text_box(update)
+            self.update_state_for_user(update)
 
-  def update_text_box(self, update):
+  def update_state_for_user(self, update):
     text = "ERROR"
     if (update.play_state == PlayState.X_WON) or (update.play_state == PlayState.O_WON):
       text = f"AAAAND THATS A WRAP: {update.play_state.name}"
     # nominal play state
     elif (update.play_state == PlayState.IN_PLAY):
       text = f"Player {update.player_turn.name} to play in board {update.active_mini_board.name.upper()}"
+      self.indicate_playable_miniboard(update.active_mini_board.name)
     elif (update.play_state == PlayState.O_MINIBOARD_SELECT) or (update.play_state == PlayState.X_MINIBOARD_SELECT):
       # TODO: figure out why I need to invert here, lazy bug
       text = f"Player {Piece.X.name if update.player_turn == Piece.O else Piece.O.name} needs to select miniboard"
+      self.indicate_playable_miniboard(update.active_mini_board.name)
     else:
       logging.error(f"Text update parsing failure: {pp.pformat(update)}")
 
     self.canvas.itemconfigure(self.text_box_id, text=text)
 
+  def indicate_playable_miniboard(self, playable_board):
+    for k,v in self.mini_board_indicator_tk_ids.items():
+      self.canvas.itemconfigure(self.mini_board_indicator_tk_ids[k], state="normal" if k == playable_board else "disabled")
+      
   def on_closing(self):
     self.kill_con_sock.send("die")
     time.sleep(self.refresh_period * 2) # give work function time to exit
@@ -113,7 +120,8 @@ class Board(Worker):
     c_mod = 70
     w_mod = 175
 
-    # self.canvas.create_oval((center.x - size / c_mod, center.y -size / c_mod ), (center.x +size / c_mod, center.y + size / c_mod))
+    self.mini_board_indicator_tk_ids[name] = self.canvas.create_oval((center.x - size / c_mod, center.y -size / c_mod ), (center.x +size / c_mod, center.y + size / c_mod), activeoutline='black', disabledoutline="white", state="disabled")
+    
     v1 = Line(Point(center.x - size / l_mod, center.y - size / s_mod), Point(center.x - size / l_mod, center.y + size / s_mod))
     v2 = Line(Point(center.x + size / l_mod, center.y - size / s_mod), Point(center.x + size / l_mod, center.y + size / s_mod))
     h1 = Line(Point(center.x - size / s_mod, center.y - size / l_mod), Point(center.x + size / s_mod, center.y - size / l_mod))
