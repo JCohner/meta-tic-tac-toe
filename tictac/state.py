@@ -51,6 +51,10 @@ class State(Worker):
         if (not is_allowed_miniboard and not is_first_place):
           logging.info(f"Player {piece.name} attempted to play in an invalid square: {square} must play in miniboard: {allowed_miniboard}")
           return False
+        is_not_already_played = True if self.board_state[square[:2]][square[2:]] == Piece.N else False
+        if (not is_not_already_played):
+          logging.error("Cannot play where a piece is already played!")
+          return False
 
 
     '''
