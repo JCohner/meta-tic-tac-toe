@@ -55,7 +55,10 @@ class State(Worker):
         if (not is_not_already_played):
           logging.error("Cannot play where a piece is already played!")
           return False
-
+        is_not_already_won_mini_board = True if self.board_state['xx'][square[:2]] == Piece.N else False
+        if (not is_not_already_won_mini_board):
+          logging.error("Cannot play in already won miniboard")
+          return False
 
     '''
     update self.board_state
