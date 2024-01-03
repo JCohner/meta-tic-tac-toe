@@ -67,8 +67,10 @@ class Board(Worker):
           update = self.state_update_queue.get()
           if update.move != None:
             self.generate_shape(update.move.piece, update.move.square)
-          if update.play_state != None:
+          if update.play_state != None and update.player_turn != None and update.active_mini_board != None:
             self.update_state_for_user(update)
+          if update.play_state == PlayState.X_WON or update == PlayState.O_WON:
+            self.display_win(update)
 
   def update_state_for_user(self, update):
     text = "ERROR"
@@ -86,6 +88,23 @@ class Board(Worker):
       logging.error(f"Text update parsing failure: {pp.pformat(update)}")
 
     self.canvas.itemconfigure(self.text_box_id, text=text)
+
+  def display_win(self, update):
+    p = self.CENTER
+    size_mod = 700
+    corners = (p.x - size_mod/2, p.y - size_mod/2), (p.x + size_mod/2, p.y + size_mod/2)
+    other_corners = (p.x - size_mod/2, p.y + size_mod/2), (p.x + size_mod/2, p.y - size_mod/2)
+    width_mod = size_mod / 12.5
+
+    if (update.player_turn == Piece.O):
+      self.canvas.create_oval(*corners, outline='black', width = width_mod)
+    elif (update.player_turn == Piece.X):
+      self.canvas.create_line(*corners, width = width_mod, fill = 'black')
+      self.canvas.create_line(*other_corners, width = width_mod, fill = 'black')
+    else:
+      logging.error(f"WRONG PIECE SPECCED:{piece}")
+      raise ValueError(f"Invalid piece specified: {piece}")
+      pass
 
   def indicate_playable_miniboard(self, playable_board):
     for k,v in self.mini_board_indicator_tk_ids.items():
