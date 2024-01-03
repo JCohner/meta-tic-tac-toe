@@ -5,7 +5,7 @@ from collections import namedtuple, Counter
 from enum import Enum
 
 from tictac.worker import Worker
-from tictac.helpers import Piece, squares, PlayState, GameState, Move, SharedEnum, valid_squares, MiniBoard
+from tictac.helpers import *
 
 from pprint import PrettyPrinter
 pp = PrettyPrinter(indent = 4)
@@ -32,11 +32,19 @@ class State(Worker):
       allowed_miniboard = self.active_mini_board.get_value()
       play_state = self.play_state.get_value()
 
-      if ((play_state == PlayState.O_MINIBOARD_SELECT) or (play_state == PlayState.O_MINIBOARD_SELECT)):
+      # Handle case in which next user click represents mini board selection
+      if ((play_state == PlayState.O_MINIBOARD_SELECT) or (play_state == PlayState.X_MINIBOARD_SELECT)):
         logging.info(f"Player {piece} is setting allowed mini board to: {square[:2]}")
         self.active_mini_board.set_value_by_name(square[:2])
         self.play_state.set_value(PlayState.IN_PLAY)
+        if (self.board_update_queue != None):
+          self.board_update_queue.put(StateUpdate(move = None, 
+                                                  play_state = self.play_state.get_value(),
+                                                  player_turn = self.player_turn.get_value(),
+                                                  active_mini_board = self.active_mini_board.get_value()))
         return False
+
+      # nominal is allowed to play in given miniboard check
       else:
         is_allowed_miniboard = True if (MiniBoard[square[:2]] ==  allowed_miniboard) else False
         is_first_place = True if (self.active_mini_board.get_value() == MiniBoard.N) else False
@@ -66,7 +74,10 @@ class State(Worker):
       logging.info(f"Player {piece} won board {square[:2]}")
       # mark on board
       if (self.board_update_queue != None):
-        self.board_update_queue.put(Move(piece=piece, square=f"xx{square[:2]}"))
+        self.board_update_queue.put(StateUpdate(move = Move(piece=piece, square=f"xx{square[:2]}"), 
+                                                play_state = None,
+                                                player_turn = None,
+                                                active_mini_board = None))
 
       # now check big board:
       self.update_state(f'xx{square[:2]}', piece)
@@ -117,7 +128,11 @@ class State(Worker):
         move = self.move_queue.get()
         valid_update = self.update_state(move.square, move.piece)
         if (self.board_update_queue != None and valid_update):
-          self.board_update_queue.put(move)
+          update = StateUpdate(move = move, 
+                               play_state = self.play_state.get_value(),
+                               player_turn = self.player_turn.get_value(),
+                               active_mini_board = self.active_mini_board.get_value())
+          self.board_update_queue.put(update)
         
     # publish final game state
     self.final_game_state_con_sock.send(GameState(board=self.board_state, play_state=self.play_state.get_value()))
