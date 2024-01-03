@@ -96,9 +96,9 @@ class Board(Worker):
     other_corners = (p.x - size_mod/2, p.y + size_mod/2), (p.x + size_mod/2, p.y - size_mod/2)
     width_mod = size_mod / 12.5
 
-    if (update.player_turn == Piece.O):
+    if (update.play_state == PlayState.O_WON):
       self.canvas.create_oval(*corners, outline='black', width = width_mod)
-    elif (update.player_turn == Piece.X):
+    elif (update.play_state == PlayState.X_WON):
       self.canvas.create_line(*corners, width = width_mod, fill = 'black')
       self.canvas.create_line(*other_corners, width = width_mod, fill = 'black')
     else:
