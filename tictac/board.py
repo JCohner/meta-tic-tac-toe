@@ -69,7 +69,7 @@ class Board(Worker):
             self.generate_shape(update.move.piece, update.move.square)
           if update.play_state != None and update.player_turn != None and update.active_mini_board != None:
             self.update_state_for_user(update)
-          if update.play_state == PlayState.X_WON or update == PlayState.O_WON:
+          if update.play_state == PlayState.X_WON or update.play_state == PlayState.O_WON:
             self.display_win(update)
 
   def update_state_for_user(self, update):

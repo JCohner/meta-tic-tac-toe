@@ -97,8 +97,6 @@ class State(Worker):
                                         active_mini_board = None))
       print(f"GAME OVER NICE JOB: {piece}")
       return False
-
-    # toggle player state # TODO (i think we may want to nest this in if not passthrough)
     
     # increment logic not to be done by main board state update
     if (not pass_through_if_main_board):
@@ -136,7 +134,9 @@ class State(Worker):
       #TODO(josh): choose first player
       while (self.move_queue.qsize() == 0 and self.do_work.value):
         time.sleep(1/120)
-      if (self.do_work.value):
+      ps = self.play_state.get_value()
+      play_on = False if (ps == PlayState.X_WON) or (ps == PlayState.O_WON) else True
+      if (self.do_work.value and play_on):
         move = self.move_queue.get()
         valid_update = self.update_state(move.square, move.piece)
         if (self.board_update_queue != None and valid_update):
