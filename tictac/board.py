@@ -11,16 +11,19 @@ from pprint import PrettyPrinter, pformat
 pp = PrettyPrinter(indent=4)
 
 from tictac.worker import Worker
-from tictac.helpers import Point, Line, Len, Piece, Move 
+from tictac.helpers import *
 
 class Board(Worker):
   def __init__(self, state_update_queue=None):
     super().__init__("board")
 
+    # TODO(josh): used for termination signal tkinter kill invokation, probably better way
     self.kill_con_sock, self.kill_recv_sock = Pipe()
 
+    # Queue at which the State objects signals to this object that it should place a piece
     self.state_update_queue = state_update_queue
 
+    # Queue object that holds clicks which indicates requested moves for the MetaTicTacToe object to send the to the State object
     self.piece_place_queue = Queue()
 
     self.refresh_period = 1/60
@@ -43,16 +46,43 @@ class Board(Worker):
     self.canvas.pack(anchor=tk.CENTER, expand=True)
     self.root.bind("<Button-1>", self.click_handler)
 
+    self.text_box_id = self.canvas.create_text(10, 10 , text="Game Start, X to play", anchor="nw", font="TkFixedFont")
+    
     self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
   def work_func(self):
     while(self.do_work.value and not self.kill_recv_sock.poll(self.refresh_period)): #implcitly has our referesh rate in it
       self.root.update()
       # self.root.update_idletasks() # TODO(Josh): figure out if update every loop is overkill?
+      '''
+      Three types of StateUpdate:
+      * All fields populated: nominal, invoked at the end of update_state look in State worker
+      * Move field only, represents large X or O being drawn over miniboard
+      * Text fields only, represents the end of miniboard selection
+      '''
+      
       if (self.state_update_queue != None):
         if (self.state_update_queue.qsize() != 0):
-          move = self.state_update_queue.get()
-          self.generate_shape(move.piece, move.square)
+          update = self.state_update_queue.get()
+          if update.move != None:
+            self.generate_shape(update.move.piece, update.move.square)
+          if update.play_state != None:
+            self.update_text_box(update)
+
+  def update_text_box(self, update):
+    text = "ERROR"
+    if (update.play_state == PlayState.X_WON) or (update.play_state == PlayState.O_WON):
+      text = f"AAAAND THATS A WRAP: {update.play_state.name}"
+    # nominal play state
+    elif (update.play_state == PlayState.IN_PLAY):
+      text = f"Player {update.player_turn.name} to play in board {update.active_mini_board.name.upper()}"
+    elif (update.play_state == PlayState.O_MINIBOARD_SELECT) or (update.play_state == PlayState.X_MINIBOARD_SELECT):
+      # TODO: figure out why I need to invert here, lazy bug
+      text = f"Player {Piece.X.name if update.player_turn == Piece.O else Piece.O.name} needs to select miniboard"
+    else:
+      logging.error(f"Text update parsing failure: {pp.pformat(update)}")
+
+    self.canvas.itemconfigure(self.text_box_id, text=text)
 
   def on_closing(self):
     self.kill_con_sock.send("die")

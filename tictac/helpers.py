@@ -35,7 +35,10 @@ PlayState = Enum('PlayState', ['IN_PLAY',
                                'O_WON',
                                'TIE'])
 
+# TODO: determine if superfolous
 GameState = namedtuple('GameState', 'board play_state')
+
+StateUpdate = namedtuple('StateUpdate', 'move play_state player_turn active_mini_board')
 
 '''
 Thread (process) safe helpers 
