@@ -18,4 +18,4 @@ Meta tic tic toe is essentially tic tac toe within tic tac toe. There are 4 key 
 3. May need to edit the `Makefile` of this project if your `python` executable is *not* aliased to `python3`
 
 ## Video Of Gameplay
-![](videos/QuickWin.mkv) 
+![](videos/QuickWin.mp4) 
