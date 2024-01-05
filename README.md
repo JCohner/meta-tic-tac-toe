@@ -1,14 +1,21 @@
 # Meta Tic Tac Toe
 Name pending.
 
-## Current TODOs:
-- [x] Add dialog elements to board
-  - [x] Indicate which player is placing
-  - [x] Indicate what board theyre allowed to place in
-  - [x] Vissualy indicate same thing
-- [ ] Add meta tic tac toe rules to state
-  - [x] enforce which mini board you are allowed to place in 
-  - [x] enforce choosing which mini board if sending player to already won miniboard
-  - [ ] disallow
-      - [x] playing in squares that have already been placed in 
-      - [ ] playing in won mini boards
+## Rules
+Meta tic tic toe is essentially tic tac toe within tic tac toe. There are 4 key rules:
+1. X starts and can choose any "mini board" to play in
+2. From that point on the next player must play in mini board that corresponds to the square played in the previous miniboard
+3. **If** a player sends another player to a board that is already won, the first player gets to choose any *not* won board to send their opponent to
+4. The game is won when the miniboards make a tic tac toe on the major board
+
+## How to run the software:
+1. Clone this repo. 
+2. Run the command: `make run`
+
+### Prerequisites
+1. You will for sure need `git make`
+2. May need `python-virtualenv`
+3. May need to edit the `Makefile` of this project if your `python` executable is *not* aliased to `python3`
+
+## Video Of Gameplay
+![](videos/QuickWin.mkv) 
