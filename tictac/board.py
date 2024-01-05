@@ -136,10 +136,12 @@ class Board(Worker):
   def generate_board(self, center, size, name):
     l_mod = 6
     s_mod = 2
-    c_mod = 70
+    c_mod = 1.85
     w_mod = 175
 
-    self.mini_board_indicator_tk_ids[name] = self.canvas.create_oval((center.x - size / c_mod, center.y -size / c_mod ), (center.x +size / c_mod, center.y + size / c_mod), activeoutline='black', disabledoutline="white", state="disabled")
+    self.mini_board_indicator_tk_ids[name] = self.canvas.create_rectangle((center.x - size / c_mod, center.y -size / c_mod ), 
+                                                                          (center.x + size / c_mod, center.y + size / c_mod), width = 2,
+                                                                          activeoutline='red', disabledoutline="white", state="disabled")
     
     v1 = Line(Point(center.x - size / l_mod, center.y - size / s_mod), Point(center.x - size / l_mod, center.y + size / s_mod))
     v2 = Line(Point(center.x + size / l_mod, center.y - size / s_mod), Point(center.x + size / l_mod, center.y + size / s_mod))
